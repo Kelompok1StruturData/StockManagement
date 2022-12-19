@@ -174,7 +174,7 @@ void removeFromTree(Produk *root, Produk *target){
     }
 }
 
-void outStock(Stock *stock, Produk *root, int amount, int price){
+void sell(Stock *stock, Produk *root, int amount, int price){
   int i;
   for(i=0;i<amount;i++){
     Produk *produk = dequeue(stock->queuePurchase); 
@@ -252,7 +252,7 @@ int main() {
   drop(&root,stock, 11);
   
   // Sell Item
-  outStock(stock,root,3,1500);
+  sell(stock,root,3,1500);
   
   // Print Histori
   printf("Daftar Produksi\n");
