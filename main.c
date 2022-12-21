@@ -234,49 +234,122 @@ Stock *createStock(){
   return stock;
 }
 
-int main() {
-  Produk* root = NULL;
-  Stock *stock = createStock();
+int main()
+{
+    Produk* root = NULL;
+    Stock *stock = createStock();
 
-  // insert Production
   add(&root,stock, 10,"Jakarta",12001);
   add(&root,stock, 12,"Jakarta",1250);
   add(&root,stock, 8,"Jakarta",1100);
   add(&root,stock, 190,"Jakarta",1200);
   add(&root,stock, 9,"Jakarta",1400);
   add(&root,stock, 7,"Jakarta",1250);
-  add(&root,stock, 11,"Jakarta",1200);
+  // add(&root,stock, 11,"Jakarta",1200);
   add(&root,stock, 123,"Jakarta",1300);
-  
-  // Drop Production
-  drop(&root,stock, 11);
-  
-  // Sell Item
-  sell(stock,root,3,1500);
-  
-  // Print Histori
-  printf("Daftar Produksi\n");
-  printQueue(stock->queuePurchase);
-  
-  printf("\nDaftar Penjualan\n");
-  printQueue(stock->queueSold);
 
-  printf("\nDaftar HPP\n");
-  printQueue(stock->queueHPP);
-  
-// Mencari Stok di Produksi
-  Produk *produk = findProduk(root, 10);
-  if (produk != NULL) {
-    printf("\nProduk Ditemukan\n");
-    printf("%d %s %0.f\n", produk->kodeproduksi, produk->kota, produk->harga);
-  } else {
-    printf("\nProduk Tidak Ditemukan\n");
-  }
+  int kode, harga;
+  char kota[30];
+  int kode1;
+  int kode2;
+  int jumlah, hargaa;
 
-  //Rekap 
+  int pilihan;
+  do
+  {
+      //Rekap
   printf("\nTotal Pendapatan : %0.f", stock->queueSold->priceSum);
   printf("\nTotal HPP : %0.f", stock->queueHPP->priceSum);
   printf("\nTotal Laba : %0.f", stock->queueSold->priceSum - stock->queueHPP->priceSum);
-  return 0;
+
+
+    printf("\n\nMenu:\n");
+    printf("1. Tambah Barang di Gudang\n");
+    printf("2. Hapus Barang di Gudang\n");
+    printf("3. Cari Barang di Gudang dengan Kode Produksi\n");
+    printf("4. Jual Barang\n");
+    printf("5. Daftar Stok\n");
+    printf("6. Daftar Penjualan\n");
+    printf("7. Daftar HPP\n");
+    printf("8. Keluar\n");
+    printf("Masukkan pilihan Anda: ");
+    scanf("%d", &pilihan);
+    switch (pilihan)
+    {
+      case 1:
+        // add(&root,stock, 10,"Jakarta",12001);
+        printf("Masukkan kode, kota, harga cth : 10 Jakarta 12000) : ");
+        scanf("%d %s %d", &kode, &kota, &harga);
+        printf("%d %s %d", kode, kota, harga);
+        add(&root,stock, kode, kota,harga);
+        break;
+
+      case 2:
+        // drop(&root,stock, 11);
+        printf("Masukkan kode barang : ");
+        scanf("%d", &kode1);
+        Produk *produk1 = findProduk(root, kode1);
+        if (produk1 != NULL) {
+          char pilihann[2];
+          printf("\nProduk Ditemukan. Apakah anda yakin ingin menghapus (y/n)? ");
+          scanf("%s",&pilihann);
+          if(pilihann != "n"){
+            printf("%d %s Rp.%0.0f dihapus\n", produk1->kodeproduksi, produk1->kota, produk1->harga);
+            drop(&root,stock, kode1);
+          }
+        } else {
+          printf("\nProduk Tidak Ditemukan\n");
+        }
+        break;
+
+      case 3:
+        printf("Masukkan kode barang : ");
+        scanf("%d", &kode2);
+        Produk *produk2 = findProduk(root, kode2);
+        if (produk2 != NULL) {
+          printf("\nProduk Ditemukan\n");
+          printf("%d %s %0.f\n", produk2->kodeproduksi, produk2->kota, produk2->harga);
+        } else {
+          printf("\nProduk Tidak Ditemukan\n");
+        }
+        break;
+
+      case 4:
+        // sell(stock,root,3,1500);
+          printf("Masukkan jumlah barang dan harga (cth : 3 1500 ) : ");
+          scanf("%d %d", &jumlah, &hargaa);
+
+          char pilihann[1];
+          printf("\nKonfirmasi penjualan (y/n)? ");
+          scanf("%s",&pilihann);
+          if(pilihann != "n"){
+            sell(stock,root,jumlah,hargaa);
+          }
+        break;
+
+      case 5:
+        printf("Daftar Stok\n");
+        printQueue(stock->queuePurchase);
+        break;
+
+      case 6:
+        printf("\nDaftar Penjualan\n");
+        printQueue(stock->queueSold);
+        break;
+
+      case 7:
+        printf("\nDaftar HPP\n");
+        printQueue(stock->queueHPP);
+        break;
+      case 8:
+        printf("Terima kasih telah menggunakan program ini.\n");
+        break;
+
+      default:
+        printf("Pilihan tidak valid. Silakan pilih kembali.\n");
+        break;
+    }
+  } while (pilihan != 8);
+return 0;
 }
 
