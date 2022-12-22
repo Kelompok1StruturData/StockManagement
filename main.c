@@ -255,13 +255,13 @@ int main()
   int jumlah, hargaa;
 
   int pilihan;
+  menu:
   do
   {
       //Rekap
   printf("\nTotal Pendapatan : %0.f", stock->queueSold->priceSum);
   printf("\nTotal HPP : %0.f", stock->queueHPP->priceSum);
   printf("\nTotal Laba : %0.f", stock->queueSold->priceSum - stock->queueHPP->priceSum);
-
 
     printf("\n\nMenu:\n");
     printf("1. Tambah Barang di Gudang\n");
@@ -280,9 +280,14 @@ int main()
         // add(&root,stock, 10,"Jakarta",12001);
         printf("Masukkan kode, kota, harga cth : 10 Jakarta 12000) : ");
         scanf("%d %s %d", &kode, &kota, &harga);
-        printf("%d %s %d", kode, kota, harga);
+        printf("\nData Berhasil Dimasukkan\n");
+		printf("%d %s %d\n", kode, kota, harga);
         add(&root,stock, kode, kota,harga);
+        system ("pause");
+		system ("cls");
+		goto menu;
         break;
+		
 
       case 2:
         // drop(&root,stock, 11);
@@ -312,6 +317,9 @@ int main()
         } else {
           printf("\nProduk Tidak Ditemukan\n");
         }
+        system ("pause");
+        system ("cls");
+        goto menu;
         break;
 
       case 4:
@@ -328,9 +336,12 @@ int main()
         break;
 
       case 5:
-        printf("Daftar Stok\n");
-        printQueue(stock->queuePurchase);
-        break;
+        printf("\nDaftar Stok\n");
+		printQueue(stock->queuePurchase);
+        system ("pause");
+        system ("cls");
+        goto menu;
+		break;
 
       case 6:
         printf("\nDaftar Penjualan\n");
@@ -352,4 +363,3 @@ int main()
   } while (pilihan != 8);
 return 0;
 }
-
