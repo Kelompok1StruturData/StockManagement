@@ -9,16 +9,19 @@ typedef struct Produk {
   struct Produk* right;
 } Produk;
 
+
 typedef struct QueueProduk {
   Produk* node;
   struct QueueProduk* next;
 } QueueProduk;
+
 
 typedef struct Queue {
   QueueProduk* front;
   QueueProduk* rear;
   double priceSum;
 } Queue;
+
 
 typedef struct Stock
 {
@@ -27,7 +30,8 @@ typedef struct Stock
    Queue *queueHPP;
 } Stock;
 
-Produk* create_node(int kodeproduksi, char *kota, double harga) {
+//-------------------------------------------------------------------
+ Produk* create_node(int kodeproduksi, char *kota, double harga) {
   Produk* new_node = (Produk*)malloc(sizeof(Produk));
   new_node->kodeproduksi = kodeproduksi;
   new_node->kota = kota;
@@ -37,6 +41,7 @@ Produk* create_node(int kodeproduksi, char *kota, double harga) {
   return new_node;
 }
 
+//-------------------------------------------------------------------
 QueueProduk* create_queue_node(Produk* node) {
   QueueProduk* new_queue_node = (QueueProduk*)malloc(sizeof(QueueProduk));
   new_queue_node->node = node;
@@ -44,6 +49,7 @@ QueueProduk* create_queue_node(Produk* node) {
   return new_queue_node;
 }
 
+//-------------------------------------------------------------------
 Queue* create_queue() {
   Queue* queue = (Queue*)malloc(sizeof(Queue));
   queue->front = NULL;
@@ -52,16 +58,20 @@ Queue* create_queue() {
   return queue;
 }
 
+
+//-------------------------------------------------------------------
 int is_empty(Queue* queue) {
   return queue->front == NULL;
 }
 
+//-------------------------------------------------------------------
 void enqueue(Queue* queue, Produk* node) {
   QueueProduk* new_queue_node = create_queue_node(node);
   if (is_empty(queue)) {
     queue->front = new_queue_node;
     queue->rear = new_queue_node;
     queue->priceSum += node->harga;
+
   } else {
     queue->rear->next = new_queue_node;
     queue->rear = new_queue_node;
@@ -69,28 +79,32 @@ void enqueue(Queue* queue, Produk* node) {
   }
 }
 
+//-------------------------------------------------------------------
 Produk* dequeue(Queue* queue) {
   if (is_empty(queue)) {
     return NULL;
   }
+
   Produk* node = queue->front->node;
   queue->priceSum -= node->harga;
   QueueProduk* temp = queue->front;
   queue->front = queue->front->next;
   if (queue->front == NULL) {
-    queue->rear = NULL;
+      queue->rear = NULL;
   }
 
   free(temp);
   return node;
 }
 
+//-------------------------------------------------------------------
 void resetQueue(Queue* queue) {
   while (!is_empty(queue)) {
     dequeue(queue);
   }
 }
 
+//-------------------------------------------------------------------
 void *inorder(Produk* root,Queue *queue) {
   if (root != NULL) {
     inorder(root->left,queue);
@@ -99,12 +113,14 @@ void *inorder(Produk* root,Queue *queue) {
   }
 }
 
-
+//-------------------------------------------------------------------
 void refresh_queue(Queue *queue, Produk *root) {
   resetQueue(queue);
   inorder(root, queue);
 }
 
+
+//-------------------------------------------------------------------
 void insert(Produk** node, Stock *stock, int kode, char* kota, double harga)
 {
   Produk *produk = *node; 
@@ -121,25 +137,30 @@ void insert(Produk** node, Stock *stock, int kode, char* kota, double harga)
     }
 }
 
+
+//-------------------------------------------------------------------
 void add(Produk** node, Stock *stock, int kode, char* kota, double harga){
     insert(node,stock, kode, kota, harga);
     refresh_queue(stock->queuePurchase, *node);
 }
 
+//-------------------------------------------------------------------
 int checkIsExists(Produk* root, int kodeproduksi) {
   if (root == NULL) {
     return 0;
   }
+  
   if (root->kodeproduksi == kodeproduksi) {
     return 1;
   }
+  
   int left = checkIsExists(root->left, kodeproduksi);
   int right = checkIsExists(root->right, kodeproduksi);
   return left || right;
 }
 
 
-
+//-------------------------------------------------------------------
 void printQueue(Queue* queue) {
   QueueProduk* temp = queue->front;
   while (temp != NULL) {
@@ -148,6 +169,7 @@ void printQueue(Queue* queue) {
   }
 }
 
+//-------------------------------------------------------------------
 Produk *findProduk(Produk *root,int kode){
     if(root == NULL){
         return NULL;
@@ -162,6 +184,7 @@ Produk *findProduk(Produk *root,int kode){
     }
 }
 
+//-------------------------------------------------------------------
 void removeFromTree(Produk *root, Produk *target){
     if (root == NULL) return;
     if (root->left == target){
@@ -174,6 +197,7 @@ void removeFromTree(Produk *root, Produk *target){
     }
 }
 
+//-------------------------------------------------------------------
 void sell(Stock *stock, Produk *root, int amount, int price){
   int i;
   for(i=0;i<amount;i++){
@@ -185,6 +209,7 @@ void sell(Stock *stock, Produk *root, int amount, int price){
   }
 }
 
+//-------------------------------------------------------------------
 // remove from bst with kode and free the memory
 void removeProduk(Produk **root,Stock *stock, int kode) {
   Produk *produk = *root;
@@ -221,6 +246,7 @@ void removeProduk(Produk **root,Stock *stock, int kode) {
   }
 }
 
+//-------------------------------------------------------------------
 void drop(Produk **root,Stock *stock, int kode){
     removeProduk(root,stock, kode);
     refresh_queue(stock->queuePurchase, *root);
@@ -234,10 +260,13 @@ Stock *createStock(){
   return stock;
 }
 
+
+
 int main()
 {
-    Produk* root = NULL;
-    Stock *stock = createStock();
+
+Produk* root = NULL;
+Stock *stock = createStock();
 
   add(&root,stock, 10,"Jakarta",12001);
   add(&root,stock, 12,"Jakarta",1250);
@@ -258,25 +287,28 @@ int main()
   menu:
   do
   {
-      //Rekap
+
+  //Rekap
   printf("\nTotal Pendapatan : %0.f", stock->queueSold->priceSum);
   printf("\nTotal HPP : %0.f", stock->queueHPP->priceSum);
   printf("\nTotal Laba : %0.f", stock->queueSold->priceSum - stock->queueHPP->priceSum);
 
-    printf("\n\nMenu:\n");
-    printf("1. Tambah Barang di Gudang\n");
-    printf("2. Hapus Barang di Gudang\n");
-    printf("3. Cari Barang di Gudang dengan Kode Produksi\n");
-    printf("4. Jual Barang\n");
-    printf("5. Daftar Stok\n");
-    printf("6. Daftar Penjualan\n");
-    printf("7. Daftar HPP\n");
-    printf("8. Keluar\n");
-    printf("Masukkan pilihan Anda: ");
-    scanf("%d", &pilihan);
-    switch (pilihan)
-    {
-      case 1:
+  printf("\n\nMenu:\n");
+  printf("1. Tambah Barang di Gudang\n");
+  printf("2. Hapus Barang di Gudang\n");
+  printf("3. Cari Barang di Gudang dengan Kode Produksi\n");
+  printf("4. Jual Barang\n");
+  printf("5. Daftar Stok\n");
+  printf("6. Daftar Penjualan\n");
+  printf("7. Daftar HPP\n");
+  printf("8. Keluar\n");
+  printf("Masukkan pilihan Anda: ");
+  scanf("%d", &pilihan);
+
+
+  switch (pilihan) {
+  
+   case 1:
         // add(&root,stock, 10,"Jakarta",12001);
         printf("Masukkan kode, kota, harga cth : 10 Jakarta 12000) : ");
         scanf("%d %s %d", &kode, &kota, &harga);
@@ -289,7 +321,7 @@ int main()
         break;
 		
 
-      case 2:
+    case 2:
         // drop(&root,stock, 11);
         printf("Masukkan kode barang : ");
         scanf("%d", &kode1);
@@ -307,7 +339,7 @@ int main()
         }
         break;
 
-      case 3:
+    case 3:
         printf("Masukkan kode barang : ");
         scanf("%d", &kode2);
         Produk *produk2 = findProduk(root, kode2);
@@ -322,7 +354,7 @@ int main()
         goto menu;
         break;
 
-      case 4:
+    case 4:
         // sell(stock,root,3,1500);
           printf("Masukkan jumlah barang dan harga (cth : 3 1500 ) : ");
           scanf("%d %d", &jumlah, &hargaa);
@@ -333,26 +365,30 @@ int main()
           if(pilihann != "n"){
             sell(stock,root,jumlah,hargaa);
           }
+        system ("pause");
+        system ("cls");
+        goto menu;
         break;
 
-      case 5:
+    case 5:
         printf("\nDaftar Stok\n");
-		printQueue(stock->queuePurchase);
+		    printQueue(stock->queuePurchase);
         system ("pause");
         system ("cls");
         goto menu;
 		break;
 
-      case 6:
+    case 6:
         printf("\nDaftar Penjualan\n");
         printQueue(stock->queueSold);
         break;
 
-      case 7:
+    case 7:
         printf("\nDaftar HPP\n");
         printQueue(stock->queueHPP);
         break;
-      case 8:
+
+    case 8:
         printf("Terima kasih telah menggunakan program ini.\n");
         break;
 
@@ -361,5 +397,6 @@ int main()
         break;
     }
   } while (pilihan != 8);
+
 return 0;
 }
