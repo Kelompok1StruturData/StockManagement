@@ -287,22 +287,33 @@ Stock *stock = createStock();
   menu:
   do
   {
-
+  system ("cls");
+  printf("=========================================================================|\n");
+  printf("                       FINAL PROJECT KELOMPOK 1                          |\n");
+  printf("-------------------------------------------------------------------------|\n");
+  printf("                          ANGGOTA KELOMPOK :                             |\n");
+  printf("                                                                         |\n");
+  printf("                  M SULTAN ARDIANSYAH   (19081010174)                    |\n");
+  printf("                  NOVANDI KEVIN P       (20081010005)                    |\n");
+  printf("                  RIZKY RAMADHAN        (20081010043)                    |\n");
+  printf("=========================================================================|\n");
+  printf("                                MENU                                     |\n");
+  printf("-------------------------------------------------------------------------|");
   //Rekap
-  printf("\nTotal Pendapatan : %0.f", stock->queueSold->priceSum);
-  printf("\nTotal HPP : %0.f", stock->queueHPP->priceSum);
-  printf("\nTotal Laba : %0.f", stock->queueSold->priceSum - stock->queueHPP->priceSum);
-
-  printf("\n\nMenu:\n");
-  printf("1. Tambah Barang di Gudang\n");
-  printf("2. Hapus Barang di Gudang\n");
-  printf("3. Cari Barang di Gudang dengan Kode Produksi\n");
-  printf("4. Jual Barang\n");
-  printf("5. Daftar Stok\n");
-  printf("6. Daftar Penjualan\n");
-  printf("7. Daftar HPP\n");
-  printf("8. Keluar\n");
-  printf("Masukkan pilihan Anda: ");
+  printf("\n Total Pendapatan : %0.f                                                    |", stock->queueSold->priceSum);
+  printf("\n Total HPP : %0.f                                                           |", stock->queueHPP->priceSum);
+  printf("\n Total Laba : %0.f                                                          |", stock->queueSold->priceSum - stock->queueHPP->priceSum);
+  printf("\n=========================================================================|\n");
+  printf(" 1. Tambah Barang di Gudang                                              |\n");
+  printf(" 2. Hapus Barang di Gudang                                               |\n");
+  printf(" 3. Cari Barang di Gudang dengan Kode Produksi                           |\n");
+  printf(" 4. Jual Barang                                                          |\n");
+  printf(" 5. Daftar Stok                                                          |\n");
+  printf(" 6. Daftar Penjualan                                                     |\n");
+  printf(" 7. Daftar HPP                                                           |\n");
+  printf(" 8. Keluar                                                               |\n");
+  printf("=========================================================================|\n");
+  printf(" Masukkan pilihan Anda: ");
   scanf("%d", &pilihan);
 
 
@@ -310,7 +321,10 @@ Stock *stock = createStock();
   
    case 1:
         // add(&root,stock, 10,"Jakarta",12001);
-        printf("Masukkan kode, kota, harga cth : 10 Jakarta 12000) : ");
+        system("cls");
+        printf("\n                MASUKKAN DATA  : ");
+        printf("\n-----------------------------------------------------");
+        printf("\n Masukkan kode, kota, harga cth : 10 Jakarta 12000) : ");
         scanf("%d %s %d", &kode, &kota, &harga);
         printf("\nData Berhasil Dimasukkan\n");
 		printf("%d %s %d\n", kode, kota, harga);
@@ -323,7 +337,10 @@ Stock *stock = createStock();
 
     case 2:
         // drop(&root,stock, 11);
-        printf("Masukkan kode barang : ");
+        system("cls");
+        printf("\n      HAPUS DATA   ");
+        printf("\n--------------------------");
+        printf("\n Masukkan kode barang : ");
         scanf("%d", &kode1);
         Produk *produk1 = findProduk(root, kode1);
         if (produk1 != NULL) {
@@ -337,6 +354,9 @@ Stock *stock = createStock();
         } else {
           printf("\nProduk Tidak Ditemukan\n");
         }
+        system ("pause");
+        system ("cls");
+		goto menu;
         break;
 
     case 3:
@@ -372,7 +392,7 @@ Stock *stock = createStock();
 
     case 5:
         printf("\nDaftar Stok\n");
-		    printQueue(stock->queuePurchase);
+		printQueue(stock->queuePurchase);
         system ("pause");
         system ("cls");
         goto menu;
