@@ -5,6 +5,7 @@ typedef struct Produk {
   int kodeproduksi;
   char *kota;
   double harga;
+  double stok;
   struct Produk* left;
   struct Produk* right;
 } Produk;
@@ -20,6 +21,7 @@ typedef struct Queue {
   QueueProduk* front;
   QueueProduk* rear;
   double priceSum;
+  double stokSum;
 } Queue;
 
 
@@ -29,6 +31,56 @@ typedef struct Stock
    Queue *queueSold;
    Queue *queueHPP;
 } Stock;
+
+
+void printAccent(char *message){
+  printf("\033[1;36m");
+  printf("%s", message);
+  printf("\033[0m");
+}
+
+
+void printBold(char *message) {
+  printf("\033[1m");
+  printf("%s", message);
+  printf("\033[0m");
+}
+
+void printError(char *message) {
+  printf("\033[0;31m");
+  printf("%s", message);
+  printf("\033[0m");
+}
+
+void printSuccess(char *message) {
+  printf("\033[0;32m");
+  printf("%s", message);
+  printf("\033[0m");
+}
+
+void printWarning(char *message) {
+  printf("\033[0;33m");
+  printf("\033[1m");
+  printf("Peringatan : ");
+  printf("\033[0;33m");
+  printf("%s", message);
+  printf("\033[0m");
+}
+
+void printInfo(char *message) {
+  printf("\033[0;34m");
+  printf("%s", message);
+  printf("\033[0m");
+}
+
+void clearScreen() {
+  system("cls");
+}
+
+void pause() {
+  system("pause");
+}
+
 
 //-------------------------------------------------------------------
  Produk* create_node(int kodeproduksi, char *kota, double harga) {
@@ -54,6 +106,7 @@ Queue* create_queue() {
   Queue* queue = (Queue*)malloc(sizeof(Queue));
   queue->front = NULL;
   queue->rear = NULL;
+  queue->stokSum = 0;
   queue->priceSum = 0;
   return queue;
 }
@@ -70,13 +123,11 @@ void enqueue(Queue* queue, Produk* node) {
   if (is_empty(queue)) {
     queue->front = new_queue_node;
     queue->rear = new_queue_node;
-    queue->priceSum += node->harga;
-
   } else {
     queue->rear->next = new_queue_node;
     queue->rear = new_queue_node;
-    queue->priceSum += node->harga;
   }
+  queue->priceSum += node->harga;
 }
 
 //-------------------------------------------------------------------
@@ -105,7 +156,7 @@ void resetQueue(Queue* queue) {
 }
 
 //-------------------------------------------------------------------
-void *inorder(Produk* root,Queue *queue) {
+void inorder(Produk root,Queue *queue) {
   if (root != NULL) {
     inorder(root->left,queue);
     enqueue(queue, root);
@@ -121,7 +172,7 @@ void refresh_queue(Queue *queue, Produk *root) {
 
 
 //-------------------------------------------------------------------
-void insert(Produk** node, Stock *stock, int kode, char* kota, double harga)
+void insert(Produk** node, Stock stock, int kode, char kota, double harga)
 {
   Produk *produk = *node; 
     if (produk == NULL){
@@ -139,7 +190,7 @@ void insert(Produk** node, Stock *stock, int kode, char* kota, double harga)
 
 
 //-------------------------------------------------------------------
-void add(Produk** node, Stock *stock, int kode, char* kota, double harga){
+void add(Produk** node, Stock stock, int kode, char kota, double harga){
     insert(node,stock, kode, kota, harga);
     refresh_queue(stock->queuePurchase, *node);
 }
@@ -161,10 +212,13 @@ int checkIsExists(Produk* root, int kodeproduksi) {
 
 
 //-------------------------------------------------------------------
+
 void printQueue(Queue* queue) {
   QueueProduk* temp = queue->front;
+  printBold("| \tKode\t | \tKota\t | \tHarga\t |\n");
+  printf("----------------------------------------------------\n");
   while (temp != NULL) {
-    printf("%d %s %0.f\n", temp->node->kodeproduksi, temp->node->kota, temp->node->harga);
+    printf("| \t%d\t | \t%s\t | \t%0.f\t |\n", temp->node->kodeproduksi, temp->node->kota, temp->node->harga);
     temp = temp->next;
   }
 }
@@ -253,170 +307,242 @@ void drop(Produk **root,Stock *stock, int kode){
 }
 
 Stock *createStock(){
-  Stock *stock = (Stock*)malloc(sizeof(Stock));
+  Stock stock = (Stock)malloc(sizeof(Stock));
   stock->queuePurchase = create_queue();
   stock->queueSold = create_queue();
   stock->queueHPP = create_queue();
   return stock;
 }
 
+void menuTambah(Produk **root,Stock *stock){
+    char kota = (char)malloc(sizeof(char)*100);
+    int kodeproduksi;
+    double harga;
+    clearScreen();
+    printBold("-----------------------------------------------------");
+    printBold("\n                MASUKKAN DATA  : ");
+    printBold("\n-----------------------------------------------------\n");
+    printInfo("Masukkan Kode Produksi (Angka) : ");
+    scanf("%d",&kodeproduksi);
+    if(checkIsExists(*root,kodeproduksi)){
+        printError("Kode Produksi telah dipakai\n");
+        pause();
+        return;
+    }
+    printInfo("Masukkan Kota Asal Produk : ");
+    scanf("%s",kota);
+    printInfo("Masukkan Harga Beli / Biaya Produksi : ");
+    scanf("%lf",&harga);
+    add(root,stock,kodeproduksi,kota,harga);
+    printSuccess("\nBerhasil Menambahkan Produk\n");
+    pause();
+}
+
+void menuHapus(Produk **root,Stock *stock){
+    if(stock->queuePurchase->stokSum == 0){
+        printError("Stok Kosong\n");
+        pause();
+        return;
+    }
+    int kodeproduksi;
+    clearScreen();
+    printBold("--------------------------");
+    printBold("\n      HAPUS DATA   ");
+    printBold("\n--------------------------\n");
+    printInfo("Masukkan Kode Produksi (Angka) : ");
+    scanf("%d",&kodeproduksi);
+    Produk *produk = findProduk(*root,kodeproduksi);
+    if(produk == NULL){
+        printError("Kode Produksi tidak ditemukan\n");
+        pause();
+        return;
+    }
+    char pilihan[1];
+    printInfo("Apakah anda ingin menjual produk ini ? (y/n) : ");
+    scanf("%s",pilihan);
+    if(pilihan != "n" && pilihan != "N"){
+      drop(root,stock,kodeproduksi);
+      printSuccess("\nBerhasil Menghapus Produk\n");
+      pause();  
+    }
+}
+
+void menuJual(Produk *root,Stock *stock){
+  clearScreen();
+    if(stock->queuePurchase->stokSum == 0){
+        printError("Stok Kosong\n");
+        pause();
+        return;
+    }
+    int amount;
+    int price;
+    clearScreen();
+    printBold("--------------------------");
+    printBold("\n      JUAL PRODUK     ");
+    printBold("\n--------------------------\n");
+    printInfo("Masukkan Jumlah Produk yang dijual : ");
+    scanf("%d",&amount);
+    if(amount > stock->queuePurchase->stokSum){
+        printError("Stok tidak mencukupi\n");
+        pause();
+        return;
+    }
+    printInfo("Masukkan Harga Jual : ");
+    scanf("%d",&price);
+    char pilihan [1];
+    printf("\nKonfirmasi penjualan (y/n)? ");
+    scanf("%s",&pilihan);
+    if(pilihan != "n" && pilihan != "N"){
+      sell(stock,root,amount,price);        
+      printSuccess("\nBerhasil Menjual Produk\n");
+      pause();
+    }
+}
+
+void menuSisaStok(Stock *stock){
+    clearScreen();
+    printBold("-----------------------------------------------------");
+    printBold("\n         SISA STOK  : ");
+    printBold("\n-----------------------------------------------------\n");
+    if (stock->queuePurchase->stokSum == 0) {
+        printError("Data Kosong\n");
+        pause();
+        return;
+    }
+    printQueue(stock->queuePurchase);
+    pause();
+}
+
+void menuHistoriPenjualan(Stock *stock){
+    clearScreen();
+    printBold("-----------------------------------------------------");
+    printBold("\n         HISTORI PENJUALAN  : ");
+    printBold("\n-----------------------------------------------------\n");
+    if(stock->queueSold->stokSum == 0){
+        printError("Data Kosong\n");
+        pause();
+        return;
+    }
+    printQueue(stock->queueSold);
+    pause();
+}
+
+void menuHistoriHPP(Stock *stock){
+    clearScreen();
+    printBold("-----------------------------------------------------");
+    printBold("\n         HISTORI HPP  : ");
+    printBold("\n-----------------------------------------------------\n");
+    if(stock->queueHPP->stokSum == 0){
+        printError("Data Kosong\n");
+        pause();
+        return;
+    }
+    printQueue(stock->queueHPP);
+    pause();
+}
+
+void menuCariProduk(Produk *root){
+    int kodeproduksi;
+    clearScreen();
+    printBold("-----------------------------------------------------");
+    printBold("\n         CARI PRODUK BERDASARAKAN KODE PRODUK  : ");
+    printBold("\n-----------------------------------------------------\n");
+    printInfo("Masukkan Kode Produk : ");
+    scanf("%d",&kodeproduksi);
+    Produk *produk = findProduk(root,kodeproduksi);
+    if(produk == NULL){
+        printError("Kode Produk tidak ditemukan\n");
+        pause();
+        return;
+    }
+    printf("Kode Produk : %d\n",produk->kodeproduksi);
+    printf("Kota : %s\n",produk->kota);
+    printf("Harga Beli / Biaya Produksi : %.0f\n",produk->harga);
+    pause();
+}
+
+void menuUtama(Produk *root,Stock *stock){
+    int pilihan;
+    do
+    {
+      clearScreen();
+      
+      
+      printBold("=========================================================================|\n");
+      printBold("                       FINAL PROJECT KELOMPOK 1                          |\n");
+      printBold("-------------------------------------------------------------------------|\n");
+      printBold("                          ANGGOTA KELOMPOK :                             |\n");
+      printBold("                                                                         |\n");
+      printBold("                  M SULTAN ARDIANSYAH   (19081010174)                    |\n");
+      printBold("                  NOVANDI KEVIN P       (20081010005)                    |\n");
+      printBold("                  RIZKY RAMADHAN        (20081010043)                    |\n");
+      printBold("=========================================================================|\n");
+      printAccent("                                MENU                                     |\n");
+      
+      printAccent("-------------------------------------------------------------------------|");
+      if (stock->queuePurchase->stokSum == 0)
+        printf("\n");
+        printWarning("Harap tambahkan stok karena stok kosong\n");
+      printf("\n Total Pendapatan : %0.f                                                    |", stock->queueSold->priceSum);
+      printf("\n Total HPP : %0.f                                                           |", stock->queueHPP->priceSum);
+      printf("\n Total Laba : %0.f                                                          |", stock->queueSold->priceSum - stock->queueHPP->priceSum);
+      printf("\n Sisa Stok : %0.f                                                           |", stock->queuePurchase->stokSum);
+      
+      printf("\n=========================================================================|\n");
+      printAccent(" 1. Tambah Barang di Gudang                                              |\n");
+      printAccent(" 2. Hapus Barang di Gudang                                               |\n");
+      printAccent(" 3. Cari Barang di Gudang dengan Kode Produksi                           |\n");
+      printAccent(" 4. Jual Barang                                                          |\n");
+      printAccent(" 5. Daftar Stok                                                          |\n");
+      printAccent(" 6. Daftar Penjualan                                                     |\n");
+      printAccent(" 7. Daftar HPP                                                           |\n");
+      printAccent(" 8. Keluar                                                               |\n");
+      printAccent("=========================================================================|\n");
+      printAccent(" Masukkan pilihan Anda: ");
+      
+      scanf("%d",&pilihan);
+
+      switch (pilihan)
+      {
+          case 1:
+            menuTambah(&root,stock);
+            break;
+          case 2:
+            menuHapus(&root,stock);
+            break;
+          case 3:
+            menuCariProduk(root);
+            break;
+          case 4:
+            menuJual(root,stock);
+            break;
+          case 5:
+            menuSisaStok(stock);
+            break;
+          case 6:
+            menuHistoriPenjualan(stock);
+            break;
+          case 7:
+            menuHistoriHPP(stock);
+            break;  
+          case 8:
+            clearScreen();
+            printAccent("Terima kasih telah menggunakan aplikasi ini\n");
+            pause();
+            break;
+          default:
+            printError("Pilihan tidak tersedia\n");
+            pause();
+            break;
+      }
+    } while (pilihan != 8);  
+}
 
 
 int main()
 {
-
-Produk* root = NULL;
-Stock *stock = createStock();
-
-  add(&root,stock, 10,"Jakarta",12001);
-  add(&root,stock, 12,"Jakarta",1250);
-  add(&root,stock, 8,"Jakarta",1100);
-  add(&root,stock, 190,"Jakarta",1200);
-  add(&root,stock, 9,"Jakarta",1400);
-  add(&root,stock, 7,"Jakarta",1250);
-  // add(&root,stock, 11,"Jakarta",1200);
-  add(&root,stock, 123,"Jakarta",1300);
-
-  int kode, harga;
-  char kota[30];
-  int kode1;
-  int kode2;
-  int jumlah, hargaa;
-
-  int pilihan;
-  menu:
-  do
-  {
-  system ("cls");
-  printf("=========================================================================|\n");
-  printf("                       FINAL PROJECT KELOMPOK 1                          |\n");
-  printf("-------------------------------------------------------------------------|\n");
-  printf("                          ANGGOTA KELOMPOK :                             |\n");
-  printf("                                                                         |\n");
-  printf("                  M SULTAN ARDIANSYAH   (19081010174)                    |\n");
-  printf("                  NOVANDI KEVIN P       (20081010005)                    |\n");
-  printf("                  RIZKY RAMADHAN        (20081010043)                    |\n");
-  printf("=========================================================================|\n");
-  printf("                                MENU                                     |\n");
-  printf("-------------------------------------------------------------------------|");
-  //Rekap
-  printf("\n Total Pendapatan : %0.f                                                    |", stock->queueSold->priceSum);
-  printf("\n Total HPP : %0.f                                                           |", stock->queueHPP->priceSum);
-  printf("\n Total Laba : %0.f                                                          |", stock->queueSold->priceSum - stock->queueHPP->priceSum);
-  printf("\n=========================================================================|\n");
-  printf(" 1. Tambah Barang di Gudang                                              |\n");
-  printf(" 2. Hapus Barang di Gudang                                               |\n");
-  printf(" 3. Cari Barang di Gudang dengan Kode Produksi                           |\n");
-  printf(" 4. Jual Barang                                                          |\n");
-  printf(" 5. Daftar Stok                                                          |\n");
-  printf(" 6. Daftar Penjualan                                                     |\n");
-  printf(" 7. Daftar HPP                                                           |\n");
-  printf(" 8. Keluar                                                               |\n");
-  printf("=========================================================================|\n");
-  printf(" Masukkan pilihan Anda: ");
-  scanf("%d", &pilihan);
-
-
-  switch (pilihan) {
-  
-   case 1:
-        // add(&root,stock, 10,"Jakarta",12001);
-        system("cls");
-        printf("\n                MASUKKAN DATA  : ");
-        printf("\n-----------------------------------------------------");
-        printf("\n Masukkan kode, kota, harga cth : 10 Jakarta 12000) : ");
-        scanf("%d %s %d", &kode, &kota, &harga);
-        printf("\nData Berhasil Dimasukkan\n");
-		printf("%d %s %d\n", kode, kota, harga);
-        add(&root,stock, kode, kota,harga);
-        system ("pause");
-		system ("cls");
-		goto menu;
-        break;
-		
-
-    case 2:
-        // drop(&root,stock, 11);
-        system("cls");
-        printf("\n      HAPUS DATA   ");
-        printf("\n--------------------------");
-        printf("\n Masukkan kode barang : ");
-        scanf("%d", &kode1);
-        Produk *produk1 = findProduk(root, kode1);
-        if (produk1 != NULL) {
-          char pilihann[2];
-          printf("\nProduk Ditemukan. Apakah anda yakin ingin menghapus (y/n)? ");
-          scanf("%s",&pilihann);
-          if(pilihann != "n"){
-            printf("%d %s Rp.%0.0f dihapus\n", produk1->kodeproduksi, produk1->kota, produk1->harga);
-            drop(&root,stock, kode1);
-          }
-        } else {
-          printf("\nProduk Tidak Ditemukan\n");
-        }
-        system ("pause");
-        system ("cls");
-		goto menu;
-        break;
-
-    case 3:
-        printf("Masukkan kode barang : ");
-        scanf("%d", &kode2);
-        Produk *produk2 = findProduk(root, kode2);
-        if (produk2 != NULL) {
-          printf("\nProduk Ditemukan\n");
-          printf("%d %s %0.f\n", produk2->kodeproduksi, produk2->kota, produk2->harga);
-        } else {
-          printf("\nProduk Tidak Ditemukan\n");
-        }
-        system ("pause");
-        system ("cls");
-        goto menu;
-        break;
-
-    case 4:
-        // sell(stock,root,3,1500);
-          printf("Masukkan jumlah barang dan harga (cth : 3 1500 ) : ");
-          scanf("%d %d", &jumlah, &hargaa);
-
-          char pilihann[1];
-          printf("\nKonfirmasi penjualan (y/n)? ");
-          scanf("%s",&pilihann);
-          if(pilihann != "n"){
-            sell(stock,root,jumlah,hargaa);
-          }
-        system ("pause");
-        system ("cls");
-        goto menu;
-        break;
-
-    case 5:
-        printf("\nDaftar Stok\n");
-		printQueue(stock->queuePurchase);
-        system ("pause");
-        system ("cls");
-        goto menu;
-		break;
-
-    case 6:
-        printf("\nDaftar Penjualan\n");
-        printQueue(stock->queueSold);
-        break;
-
-    case 7:
-        printf("\nDaftar HPP\n");
-        printQueue(stock->queueHPP);
-        break;
-
-    case 8:
-        printf("Terima kasih telah menggunakan program ini.\n");
-        break;
-
-      default:
-        printf("Pilihan tidak valid. Silakan pilih kembali.\n");
-        break;
-    }
-  } while (pilihan != 8);
-
-return 0;
+  Produk* root = NULL;
+  Stock *stock = createStock();
+  menuUtama(root,stock);
+  return 0;
 }
