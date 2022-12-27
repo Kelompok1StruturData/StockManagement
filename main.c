@@ -575,6 +575,7 @@ void menuUtama(Produk *root,Stock *stock){
       printBold("                                                                         |\n");
       printBold("                  M SULTAN ARDIANSYAH   (19081010174)                    |\n");
       printBold("                  M FADZILLAH ZAIN      (19081010155)                    |\n");
+      printBold("                  M HIBATUL HAQQI       (19081010182)                    |\n");
       printBold("                  NOVANDI KEVIN P       (20081010005)                    |\n");
       printBold("                  RIZKY RAMADHAN        (20081010043)                    |\n");
       printBold("=========================================================================|\n");
@@ -649,10 +650,64 @@ void createFileIfNotExists(char *filename){
 }
 
 
+void readProdukFromFile(Produk** root, Stock *stock) {
+  char * filename = "produk.dat";
+  // Buka file dengan mode membaca
+  FILE* file = fopen(filename, "r");
+  // Jika file tidak dapat dibuka, keluar dari fungsi
+  if (file == NULL) {
+    printError("Error opening file!\n");
+    return;
+  }
+  // Inisialisasi variabel untuk menyimpan informasi dari file
+  int kodeproduksi;
+  char *kota = malloc(100);
+  double harga;
+  int stok;
 
-void createDatabase() {
+  // Baca informasi dari file satu baris per satu
+  while (fscanf(file, "%d,%[^,],%lf,%d", &kodeproduksi, kota, &harga, &stok) == 4) {
+    // Alokasi memori untuk node baru
+    insert(root,stock,kodeproduksi,kota,harga,stok);
+  }
+  refresh_queue(stock->queuePurchase, *root);
+  // Tutup file setelah selesai membaca
+  fclose(file);
+}
+
+
+void readPenjualan(Stock * stock){
+  char * filename = "penjualan.dat";
+  // Buka file dengan mode membaca
+  FILE* file = fopen(filename, "r");
+  // Jika file tidak dapat dibuka, keluar dari fungsi
+  if (file == NULL) {
+    printError("Error opening file!\n");
+    return;
+  }
+  // Inisialisasi variabel untuk menyimpan informasi dari file
+  int kodeproduksi;
+  int jumlah;
+  char *kota = malloc(100);
+  double hargajual;
+  double hpp;
+  // Baca informasi dari file satu baris per satu
+  while (fscanf(file, "%d,%[^,],%lf,%d,%lf", &kodeproduksi, kota, &hargajual, &jumlah, &hpp) == 5) {
+    // Alokasi memori untuk node baru
+      Produk *produkJual = create_node(kodeproduksi,kota,hargajual,jumlah);
+      enqueue(stock->queueSold, produkJual);
+      Produk *produkHPP = create_node(kodeproduksi,kota,hpp,jumlah);
+      enqueue(stock->queueHPP, produkHPP);
+  }
+  // Tutup file setelah selesai membaca
+  fclose(file);
+}
+
+void createDatabase(Produk **root, Stock *stock) {
     createFileIfNotExists("produk.dat");
     createFileIfNotExists("penjualan.dat");
+    readProdukFromFile(root,stock);
+    readPenjualan(stock);
 }
 
 
@@ -660,7 +715,7 @@ int main()
 {
   Produk* root = NULL;
   Stock *stock = createStock();
-  createDatabase();
+  createDatabase(&root,stock);
   menuUtama(root,stock);
   return 0;
 }
