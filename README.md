@@ -1,4 +1,6 @@
 # Pengelolaan Stok Gudang Dengan Metode FIFO
+![Gudang](https://github.com/Kelompok1StruturData/StockManagement/blob/main/assets/doc.png?raw=true)
+[Image by macrovector on Freepik](https://www.freepik.com/free-vector/warehouse-industrial-space-storage-pick-pack-orders-shipping-delivering-logistic-services-isometric-web-banner_13869096.htm#query=warehouse&position=11&from_view=search&track=sph)
 ### Anggota
 1. 	M. Sultan Ardiansyah    (19081010174)
 2. 	M. Fadzillah Zain    (19081010155)
