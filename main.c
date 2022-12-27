@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct Produk {
   int kodeproduksi;
   char *kota;
   double harga;
-  double stok;
+  int stok;
   struct Produk* left;
   struct Produk* right;
 } Produk;
@@ -21,7 +22,7 @@ typedef struct Queue {
   QueueProduk* front;
   QueueProduk* rear;
   double priceSum;
-  double stokSum;
+  int stokSum;
 } Queue;
 
 
@@ -61,7 +62,7 @@ void printSuccess(char *message) {
 void printWarning(char *message) {
   printf("\033[0;33m");
   printf("\033[1m");
-  printf("Peringatan : ");
+  printf("\nPeringatan : ");
   printf("\033[0;33m");
   printf("%s", message);
   printf("\033[0m");
@@ -83,11 +84,12 @@ void pause() {
 
 
 //-------------------------------------------------------------------
- Produk* create_node(int kodeproduksi, char *kota, double harga) {
+ Produk* create_node(int kodeproduksi, char *kota, double harga, int stok) {
   Produk* new_node = (Produk*)malloc(sizeof(Produk));
   new_node->kodeproduksi = kodeproduksi;
   new_node->kota = kota;
   new_node->harga = harga;
+  new_node->stok = stok;
   new_node->left = NULL;
   new_node->right = NULL;
   return new_node;
@@ -110,7 +112,47 @@ Queue* create_queue() {
   queue->priceSum = 0;
   return queue;
 }
+//-------------------------------------------------------------------
 
+void saveToFileRecursive(Produk* node, FILE* file) {
+  // Base case: jika node kosong, kembali dari rekursi
+  if (node == NULL) return;
+  // Gunakan traversal in-order untuk mengunjungi node secara terurut
+  saveToFileRecursive(node->left, file);
+  // Tulis informasi dari node ke file
+  fprintf(file, "%d,%s,%0.f,%d\n", node->kodeproduksi, node->kota, node->harga, node->stok);
+  saveToFileRecursive(node->right, file);
+}
+
+void saveFileProduk(Produk* root) {
+  char fileName[11] ="produk.dat";
+  // Buka file dengan mode menulis
+  FILE* file = fopen(fileName, "w");
+  // Jika file tidak dapat dibuka, keluar dari fungsi
+  if (file == NULL) {
+    printError("Error opening file!\n");
+    return;
+  }
+  // Panggil rekursif untuk menuliskan setiap node ke file
+  saveToFileRecursive(root, file);
+  // Tutup file setelah selesai menulis
+  fclose(file);
+}
+
+void savePenjualan(Produk *node, double hpp){
+  char fileName[15] ="penjualan.dat";
+  // Buka file dengan mode menulis
+  FILE* file = fopen(fileName, "a");
+  // Jika file tidak dapat dibuka, keluar dari fungsi
+  if (file == NULL) {
+    printError("Error opening file!\n");
+    return;
+  }
+  // Tambahkan pada baris baru
+  fprintf(file, "%d,%s,%0.f,%d,%0.f\n", node->kodeproduksi, node->kota, node->harga, node->stok,hpp);
+  // Tutup file setelah selesai menulis
+  fclose(file);
+}
 
 //-------------------------------------------------------------------
 int is_empty(Queue* queue) {
@@ -127,7 +169,8 @@ void enqueue(Queue* queue, Produk* node) {
     queue->rear->next = new_queue_node;
     queue->rear = new_queue_node;
   }
-  queue->priceSum += node->harga;
+  queue->priceSum += node->harga * node->stok;
+  queue->stokSum += node->stok;
 }
 
 //-------------------------------------------------------------------
@@ -138,28 +181,49 @@ Produk* dequeue(Queue* queue) {
 
   Produk* node = queue->front->node;
   queue->priceSum -= node->harga;
-  QueueProduk* temp = queue->front;
-  queue->front = queue->front->next;
-  if (queue->front == NULL) {
-      queue->rear = NULL;
+  queue->stokSum --;
+  node->stok --;
+  if (node->stok == 0) {
+    QueueProduk* temp = queue->front;
+    queue->front = queue->front->next;
+    if (queue->front == NULL) {
+        queue->rear = NULL;
+    }
+    free(temp);
   }
-
-  free(temp);
   return node;
 }
 
+Produk* dequeueAll(Queue* queue) {
+  if (is_empty(queue)) {
+    return NULL;
+  }
+
+  Produk* node = queue->front->node;
+  queue->priceSum -= node->harga * node->stok;
+  queue->stokSum -= node->stok;
+    QueueProduk* temp = queue->front;
+    queue->front = queue->front->next;
+    if (queue->front == NULL) {
+        queue->rear = NULL;
+    }
+    free(temp);
+  
+  return node;
+}
 //-------------------------------------------------------------------
 void resetQueue(Queue* queue) {
   while (!is_empty(queue)) {
-    dequeue(queue);
+    dequeueAll(queue);
   }
 }
 
 //-------------------------------------------------------------------
-void inorder(Produk root,Queue *queue) {
+void *inorder(Produk* root,Queue *queue) {
   if (root != NULL) {
     inorder(root->left,queue);
-    enqueue(queue, root);
+    if (root->stok > 0)
+      enqueue(queue, root);
     inorder(root->right,queue);
   }
 }
@@ -172,27 +236,28 @@ void refresh_queue(Queue *queue, Produk *root) {
 
 
 //-------------------------------------------------------------------
-void insert(Produk** node, Stock stock, int kode, char kota, double harga)
+void insert(Produk** node, Stock *stock, int kode, char* kota, double harga, int stok)
 {
   Produk *produk = *node; 
     if (produk == NULL){
-        *node = create_node(kode, kota,harga);
+        *node = create_node(kode, kota,harga,stok);
     }
     else
     {
         if (kode <= produk->kodeproduksi){
-            insert(&(produk->left),stock, kode, kota, harga);
+            insert(&(produk->left),stock, kode, kota, harga, stok);
         }else{
-            insert(&(produk->right), stock, kode, kota, harga);
+            insert(&(produk->right), stock, kode, kota, harga,stok);
         }   
     }
 }
 
 
 //-------------------------------------------------------------------
-void add(Produk** node, Stock stock, int kode, char kota, double harga){
-    insert(node,stock, kode, kota, harga);
+void add(Produk** node, Stock *stock, int kode, char* kota, double harga, int stok){
+    insert(node,stock, kode, kota, harga,stok);
     refresh_queue(stock->queuePurchase, *node);
+    saveFileProduk(*node);
 }
 
 //-------------------------------------------------------------------
@@ -215,10 +280,10 @@ int checkIsExists(Produk* root, int kodeproduksi) {
 
 void printQueue(Queue* queue) {
   QueueProduk* temp = queue->front;
-  printBold("| \tKode\t | \tKota\t | \tHarga\t |\n");
+  printBold("| \tKode\t | \tKota\t | \tHarga\t | \tStok\t |\n");
   printf("----------------------------------------------------\n");
   while (temp != NULL) {
-    printf("| \t%d\t | \t%s\t | \t%0.f\t |\n", temp->node->kodeproduksi, temp->node->kota, temp->node->harga);
+    printf("| \t%d\t | \t%s\t | \t%0.f\t  | \t%d\t |\n", temp->node->kodeproduksi, temp->node->kota, temp->node->harga,temp->node->stok);
     temp = temp->next;
   }
 }
@@ -239,6 +304,19 @@ Produk *findProduk(Produk *root,int kode){
 }
 
 //-------------------------------------------------------------------
+
+int isExistInQueue(Queue *queue, int kode){
+    QueueProduk *temp = queue->front;
+    while(temp != NULL){
+        if(temp->node->kodeproduksi == kode){
+            return 1;
+        }
+        temp = temp->next;
+    }
+    return 0;
+}
+
+// -------------------------------------------------------------------
 void removeFromTree(Produk *root, Produk *target){
     if (root == NULL) return;
     if (root->left == target){
@@ -252,15 +330,26 @@ void removeFromTree(Produk *root, Produk *target){
 }
 
 //-------------------------------------------------------------------
-void sell(Stock *stock, Produk *root, int amount, int price){
+void sell(Stock *stock, Produk *root, int amount, double price){
   int i;
-  for(i=0;i<amount;i++){
-    Produk *produk = dequeue(stock->queuePurchase); 
-    enqueue(stock->queueHPP, produk);
-    Produk *produk2 = create_node(produk->kodeproduksi, produk->kota, price);
-    enqueue(stock->queueSold, produk2);
-    removeFromTree(root, produk);
+  int total = 0;
+  if(amount > 0){
+    for(i=0;i<amount;i++){
+      Produk *produk = dequeue(stock->queuePurchase); 
+      total++;
+      if(produk->stok == 0 || i == amount-1){
+        Produk *produkHPP = create_node(produk->kodeproduksi, produk->kota, produk->harga,total);
+        enqueue(stock->queueHPP, produkHPP);
+        Produk *produkJual = create_node(produk->kodeproduksi, produk->kota, price,total);
+        enqueue(stock->queueSold, produkJual);
+        savePenjualan(produkJual, produk->harga);
+        total = 0;
+      }
+      
+    }
+    saveFileProduk(root);
   }
+  
 }
 
 //-------------------------------------------------------------------
@@ -304,10 +393,11 @@ void removeProduk(Produk **root,Stock *stock, int kode) {
 void drop(Produk **root,Stock *stock, int kode){
     removeProduk(root,stock, kode);
     refresh_queue(stock->queuePurchase, *root);
+    saveFileProduk(*root);
 }
 
 Stock *createStock(){
-  Stock stock = (Stock)malloc(sizeof(Stock));
+  Stock *stock = (Stock*)malloc(sizeof(Stock));
   stock->queuePurchase = create_queue();
   stock->queueSold = create_queue();
   stock->queueHPP = create_queue();
@@ -315,9 +405,10 @@ Stock *createStock(){
 }
 
 void menuTambah(Produk **root,Stock *stock){
-    char kota = (char)malloc(sizeof(char)*100);
+    char *kota = (char*)malloc(sizeof(char)*100);
     int kodeproduksi;
     double harga;
+    int stok;
     clearScreen();
     printBold("-----------------------------------------------------");
     printBold("\n                MASUKKAN DATA  : ");
@@ -333,7 +424,9 @@ void menuTambah(Produk **root,Stock *stock){
     scanf("%s",kota);
     printInfo("Masukkan Harga Beli / Biaya Produksi : ");
     scanf("%lf",&harga);
-    add(root,stock,kodeproduksi,kota,harga);
+    printInfo("Masukkan Jumlah Stok : ");
+    scanf("%d",&stok);
+    add(root,stock,kodeproduksi,kota,harga, stok);
     printSuccess("\nBerhasil Menambahkan Produk\n");
     pause();
 }
@@ -351,16 +444,21 @@ void menuHapus(Produk **root,Stock *stock){
     printBold("\n--------------------------\n");
     printInfo("Masukkan Kode Produksi (Angka) : ");
     scanf("%d",&kodeproduksi);
-    Produk *produk = findProduk(*root,kodeproduksi);
-    if(produk == NULL){
+    
+    if(checkIsExists(*root,kodeproduksi) == 0){
         printError("Kode Produksi tidak ditemukan\n");
         pause();
         return;
+    }else if(isExistInQueue(stock->queueSold,kodeproduksi)){
+        printError("Tidak dapat menghapus produk yang telah terjual\n");
+        pause();
+        return;
     }
+    
     char pilihan[1];
-    printInfo("Apakah anda ingin menjual produk ini ? (y/n) : ");
+    printInfo("Apakah anda ingin menghapus produk ini ? (y/n) : ");
     scanf("%s",pilihan);
-    if(pilihan != "n" && pilihan != "N"){
+    if(strcmp(pilihan,"n") != 0 && strcmp(pilihan,"N")!=0){
       drop(root,stock,kodeproduksi);
       printSuccess("\nBerhasil Menghapus Produk\n");
       pause();  
@@ -375,7 +473,7 @@ void menuJual(Produk *root,Stock *stock){
         return;
     }
     int amount;
-    int price;
+    double price;
     clearScreen();
     printBold("--------------------------");
     printBold("\n      JUAL PRODUK     ");
@@ -386,13 +484,17 @@ void menuJual(Produk *root,Stock *stock){
         printError("Stok tidak mencukupi\n");
         pause();
         return;
+    }else if(amount <= 0){
+        printError("Jumlah tidak valid\n");
+        pause();
+        return;
     }
     printInfo("Masukkan Harga Jual : ");
-    scanf("%d",&price);
+    scanf("%lf",&price);
     char pilihan [1];
     printf("\nKonfirmasi penjualan (y/n)? ");
     scanf("%s",&pilihan);
-    if(pilihan != "n" && pilihan != "N"){
+    if(strcmp(pilihan,"n") != 0 && strcmp(pilihan,"N")!=0){
       sell(stock,root,amount,price);        
       printSuccess("\nBerhasil Menjual Produk\n");
       pause();
@@ -465,15 +567,14 @@ void menuUtama(Produk *root,Stock *stock){
     int pilihan;
     do
     {
-      clearScreen();
-      
-      
+      // clearScreen(); 
       printBold("=========================================================================|\n");
       printBold("                       FINAL PROJECT KELOMPOK 1                          |\n");
       printBold("-------------------------------------------------------------------------|\n");
       printBold("                          ANGGOTA KELOMPOK :                             |\n");
       printBold("                                                                         |\n");
       printBold("                  M SULTAN ARDIANSYAH   (19081010174)                    |\n");
+      printBold("                  M FADZILLAH ZAIN      (19081010155)                    |\n");
       printBold("                  NOVANDI KEVIN P       (20081010005)                    |\n");
       printBold("                  RIZKY RAMADHAN        (20081010043)                    |\n");
       printBold("=========================================================================|\n");
@@ -481,12 +582,11 @@ void menuUtama(Produk *root,Stock *stock){
       
       printAccent("-------------------------------------------------------------------------|");
       if (stock->queuePurchase->stokSum == 0)
-        printf("\n");
         printWarning("Harap tambahkan stok karena stok kosong\n");
       printf("\n Total Pendapatan : %0.f                                                    |", stock->queueSold->priceSum);
       printf("\n Total HPP : %0.f                                                           |", stock->queueHPP->priceSum);
       printf("\n Total Laba : %0.f                                                          |", stock->queueSold->priceSum - stock->queueHPP->priceSum);
-      printf("\n Sisa Stok : %0.f                                                           |", stock->queuePurchase->stokSum);
+      printf("\n Sisa Stok : %d                                                           |", stock->queuePurchase->stokSum);
       
       printf("\n=========================================================================|\n");
       printAccent(" 1. Tambah Barang di Gudang                                              |\n");
@@ -538,11 +638,29 @@ void menuUtama(Produk *root,Stock *stock){
     } while (pilihan != 8);  
 }
 
+void createFileIfNotExists(char *filename){
+    FILE *fptr;
+    fptr = fopen(filename, "rb+");
+    if(fptr == NULL) 
+    {
+        fptr = fopen(filename, "wb");
+    }
+    fclose(fptr);
+}
+
+
+
+void createDatabase() {
+    createFileIfNotExists("produk.dat");
+    createFileIfNotExists("penjualan.dat");
+}
+
 
 int main()
 {
   Produk* root = NULL;
   Stock *stock = createStock();
+  createDatabase();
   menuUtama(root,stock);
   return 0;
 }
