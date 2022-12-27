@@ -280,10 +280,16 @@ int checkIsExists(Produk* root, int kodeproduksi) {
 
 void printQueue(Queue* queue) {
   QueueProduk* temp = queue->front;
-  printBold("| \tKode\t | \tKota\t | \tHarga\t | \tStok\t |\n");
-  printf("----------------------------------------------------\n");
   while (temp != NULL) {
-    printf("| \t%d\t | \t%s\t | \t%0.f\t  | \t%d\t |\n", temp->node->kodeproduksi, temp->node->kota, temp->node->harga,temp->node->stok);
+    printBold("Kode Produk\t: ");
+    printf("%d", temp->node->kodeproduksi);
+    printBold("\nKota\t\t: ");
+    printf("%s", temp->node->kota);
+    printBold("\nHarga\t\t: ");
+    printf("%0.f", temp->node->harga);
+    printBold("\nStok\t\t: ");
+    printf("%d", temp->node->stok);
+    printf("\n====================================\n");
     temp = temp->next;
   }
 }
@@ -557,9 +563,15 @@ void menuCariProduk(Produk *root){
         pause();
         return;
     }
-    printf("Kode Produk : %d\n",produk->kodeproduksi);
-    printf("Kota : %s\n",produk->kota);
-    printf("Harga Beli / Biaya Produksi : %.0f\n",produk->harga);
+    printBold("Kode Produk\t: ");
+    printf("%d", produk->kodeproduksi);
+    printBold("\nKota\t\t: ");
+    printf("%s", produk->kota);
+    printBold("\nHarga\t\t: ");
+    printf("%0.f", produk->harga);
+    printBold("\nStok\t\t: ");
+    printf("%d", produk->stok);
+    printf("\n====================================\n");
     pause();
 }
 
@@ -567,7 +579,7 @@ void menuUtama(Produk *root,Stock *stock){
     int pilihan;
     do
     {
-      // clearScreen(); 
+      clearScreen(); 
       printBold("=========================================================================|\n");
       printBold("                       FINAL PROJECT KELOMPOK 1                          |\n");
       printBold("-------------------------------------------------------------------------|\n");
